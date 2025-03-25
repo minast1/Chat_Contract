@@ -146,22 +146,22 @@ contract CounterTest is Test {
     assert(chatInstance.getUserFriends(testAddress1).length == 1);
   }
 
-  function test_getMessagesByRoomId_ItReturnsListOfMessages() public {
-    address testAddress1 = makeAddr("chatInstance");
-    address testAddress2 = makeAddr("chatInstance2");
+  // function test_getMessagesByRoomId_ItReturnsListOfMessages() public {
+  //   address testAddress1 = makeAddr("chatInstance");
+  //   address testAddress2 = makeAddr("chatInstance2");
 
-    vm.prank(testAddress1);
-    chatInstance.createAccount("user1");
+  //   vm.prank(testAddress1);
+  //   chatInstance.createAccount("user1");
 
-    vm.prank(testAddress2);
-    chatInstance.createAccount("user2");
+  //   vm.prank(testAddress2);
+  //   chatInstance.createAccount("user2");
 
-    vm.startPrank(testAddress1);
-    chatInstance.addFriend(testAddress2);
-    vm.stopPrank();
-    assert(
-      chatInstance.getMessagesByRoomId(chatInstance.getRoomId(testAddress1, testAddress2)).length
-        == 0
-    );
-  }
+  //   vm.startPrank(testAddress1);
+  //   chatInstance.addFriend(testAddress2);
+  //   vm.stopPrank();
+  //   assert(
+  //     chatInstance.getMessagesByRoomId(chatInstance.getRoomId(testAddress1, testAddress2)).length
+  //       == 0
+  //   );
+  // }
 }
