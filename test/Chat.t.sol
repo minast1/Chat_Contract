@@ -146,22 +146,50 @@ contract CounterTest is Test {
     assert(chatInstance.getUserFriends(testAddress1).length == 1);
   }
 
-  // function test_getMessagesByRoomId_ItReturnsListOfMessages() public {
-  //   address testAddress1 = makeAddr("chatInstance");
-  //   address testAddress2 = makeAddr("chatInstance2");
+  function test_startChat_ItRevertsIfUserAccountDoesNotExist() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+    vm.startPrank(testAddress1);
+    vm.expectRevert(abi.encodeWithSelector(Chat.UserAccountDoesNotExist.selector, testAddress1));
+    chatInstance.startChat(friendAddress);
+    vm.stopPrank();
+  }
 
-  //   vm.prank(testAddress1);
-  //   chatInstance.createAccount("user1");
+  function test_startChat_ItCreatesANewChatRoom() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+    bytes32 roomId;
+    vm.prank(testAddress1);
+    chatInstance.createAccount("user1");
+    vm.prank(friendAddress);
+    chatInstance.createAccount("user2");
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(friendAddress);
+    roomId = chatInstance.startChat(friendAddress);
+    vm.stopPrank();
+    assertEq(chatInstance.getRoomsLength(), 1);
+    address[] memory members = chatInstance.getChatRoomUsers(roomId);
+    assertEq(members.length, 2);
+    assertEq(members[0], testAddress1);
+    assertEq(members[1], friendAddress);
+    assert(chatInstance.getMessagesByRoomId(roomId).length == 0);
+  }
 
-  //   vm.prank(testAddress2);
-  //   chatInstance.createAccount("user2");
-
-  //   vm.startPrank(testAddress1);
-  //   chatInstance.addFriend(testAddress2);
-  //   vm.stopPrank();
-  //   assert(
-  //     chatInstance.getMessagesByRoomId(chatInstance.getRoomId(testAddress1, testAddress2)).length
-  //       == 0
-  //   );
-  // }
+  function test_sendMessage_ItSendsAMessage() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+    bytes32 roomId;
+    vm.prank(testAddress1);
+    chatInstance.createAccount("user1");
+    vm.prank(friendAddress);
+    chatInstance.createAccount("user2");
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(friendAddress);
+    roomId = chatInstance.startChat(friendAddress);
+    vm.stopPrank();
+    vm.startPrank(testAddress1);
+    chatInstance.sendMessage(roomId, "message");
+    vm.stopPrank();
+    assert(chatInstance.getMessagesByRoomId(roomId).length == 1);
+  }
 }

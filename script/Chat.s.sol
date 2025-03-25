@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import { Script, console } from "forge-std/Script.sol";
+import { Chat } from "../src/Chat.sol";
 
 contract CounterScript is Script {
   function setUp() public { }
@@ -9,7 +10,7 @@ contract CounterScript is Script {
   function run() public {
     vm.startBroadcast();
 
-    // counter = new Counter();
+    new Chat(msg.sender);
 
     vm.stopBroadcast();
   }

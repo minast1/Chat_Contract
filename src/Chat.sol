@@ -124,19 +124,27 @@ contract Chat is Ownable {
   }
 
   //start a chat room between two users
-  function startChat(address chatee) external {
+  function startChat(address chatee) external returns (bytes32) {
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
     bytes32 roomId = getRoomId(msg.sender, chatee);
     _roomsList.add(roomId);
     chatRooms[roomId].users.add(msg.sender);
     chatRooms[roomId].users.add(chatee);
+    return roomId;
   }
+
   //get the messages for a room by roomId
 
   function getMessagesByRoomId(bytes32 roomId) public view returns (MessageStruct[] memory) {
     if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     return chatRooms[roomId].messages;
+  }
+
+  function getChatRoomUsers(bytes32 roomId) public view returns (address[] memory) {
+    if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
+    address[] memory members = chatRooms[roomId].users.values();
+    return members;
   }
 
   function existsUserName(bytes32 key) public view returns (bool) {
@@ -162,5 +170,9 @@ contract Chat is Ownable {
   function getUserFriends(address userAddress) public view returns (FriendStruct[] memory) {
     if (!existsAccount(userAddress)) revert UserAccountDoesNotExist(userAddress);
     return users[userAddress].friends;
+  }
+
+  function getRoomsLength() public view returns (uint256) {
+    return _roomsList.length();
   }
 }
