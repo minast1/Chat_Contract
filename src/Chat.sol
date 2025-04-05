@@ -17,7 +17,7 @@ contract Chat is Ownable {
 
   struct FriendStruct {
     address _address;
-    bytes32 _nickname;
+    string _nickname;
   }
 
   struct UserStruct {
@@ -79,11 +79,25 @@ contract Chat is Ownable {
   function stringToBytes32(string memory name) public pure returns (bytes32) {
     return bytes32(abi.encodePacked(name));
   }
+
+  //converts bytes32 to string
+  function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+    uint8 i = 0;
+    while (i < 32 && _bytes32[i] != 0) {
+      i++;
+    }
+    bytes memory bytesArray = new bytes(i);
+    for (uint8 j = 0; j < i; j++) {
+      bytesArray[j] = _bytes32[j];
+    }
+    return string(bytesArray);
+  }
   // Returns the default name provided by an user
 
-  function getUserName(address userAddress) public view returns (bytes32) {
+  function getUserName(address userAddress) public view returns (string memory) {
     if (!existsAccount(userAddress)) revert UserAccountDoesNotExist(userAddress);
-    return users[userAddress].name;
+    bytes32 decodedName = users[userAddress].name;
+    return bytes32ToString(decodedName);
   }
 
   // Adds new user as your friend
@@ -93,18 +107,17 @@ contract Chat is Ownable {
     if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
     if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
     _friendsList.add(friendAddress);
-    users[msg.sender].friends.push(FriendStruct(friendAddress, bytes32(0)));
+    users[msg.sender].friends.push(FriendStruct(friendAddress, string("")));
   }
 
   //Adds the new user as your friend with an associated nickname
   function addFriend(address friendAddress, string memory _nickname) external {
-    bytes32 nickname = stringToBytes32(_nickname);
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(friendAddress)) revert FriendAccountDoesNotExist(friendAddress);
     if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
     if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
     _friendsList.add(friendAddress);
-    users[msg.sender].friends.push(FriendStruct(friendAddress, nickname));
+    users[msg.sender].friends.push(FriendStruct(friendAddress, _nickname));
   }
 
   // Checks if two users are already friends or not

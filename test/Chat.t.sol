@@ -43,11 +43,19 @@ contract CounterTest is Test {
     vm.stopPrank();
   }
 
-  function test_GetUserName_ItReturnsTheDefaultNameProvidedByAnUser() public {
+  function test_CreateAccount_ItAddsUserAccount() public {
     address testAddress1 = makeAddr("chatInstance");
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
-    assert(chatInstance.getUserName(testAddress1) == "user1");
+    assert(chatInstance.existsAccount(testAddress1));
+    assertEq(chatInstance.getUserName(testAddress1), "user1");
+  }
+
+  function test_GetUserName_ItReturnsTheDefaultNameProvidedByAnUser() public {
+    address testAddress1 = makeAddr("chatInstance");
+    vm.prank(testAddress1);
+    chatInstance.createAccount("@DanteDiggs");
+    assertEq(chatInstance.getUserName(testAddress1), "@DanteDiggs");
   }
 
   function test_AddFriend_ItRevertsIfUserAccountDoesNotExist() public {
@@ -125,7 +133,7 @@ contract CounterTest is Test {
 
     vm.startPrank(testAddress1);
     chatInstance.addFriend(testAddress2, "nickname");
-    assert(chatInstance.getUserFriends(testAddress1)[0]._nickname == "nickname");
+    assertEq(chatInstance.getUserFriends(testAddress1)[0]._nickname, "nickname");
 
     vm.stopPrank();
   }
