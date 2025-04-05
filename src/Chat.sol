@@ -76,12 +76,12 @@ contract Chat is Ownable {
   }
 
   //convert string to bytes32
-  function stringToBytes32(string memory name) public pure returns (bytes32) {
+  function stringToBytes32(string memory name) private pure returns (bytes32) {
     return bytes32(abi.encodePacked(name));
   }
 
   //converts bytes32 to string
-  function bytes32ToString(bytes32 _bytes32) public pure returns (string memory) {
+  function bytes32ToString(bytes32 _bytes32) private pure returns (string memory) {
     uint8 i = 0;
     while (i < 32 && _bytes32[i] != 0) {
       i++;
