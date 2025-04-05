@@ -4,7 +4,7 @@ pragma solidity ^0.8.13;
 import { Script, console } from "forge-std/Script.sol";
 import { Chat } from "../src/Chat.sol";
 
-contract CounterScript is Script {
+contract ChatScript is Script {
   function setUp() public { }
 
   function run() public {

@@ -59,19 +59,25 @@ contract Chat is Ownable {
   error ChatRoomDoesNotExist(bytes32 roomId);
 
   // Registers the caller(msg.sender) to our app with a non-empty username
-  function createAccount(bytes32 name) external {
-    if (existsUserName(name)) {
-      revert UserNameAlreadyExists(name);
+  function createAccount(string memory name) external {
+    bytes32 nameToBytes32 = stringToBytes32(name);
+    if (existsUserName(nameToBytes32)) {
+      revert UserNameAlreadyExists(nameToBytes32);
     } else {
       if (existsAccount(msg.sender)) {
         revert UserAccountAlreadyExists(msg.sender);
       } else {
         //add the new user
-        addNewNamePointer(name);
+        addNewNamePointer(nameToBytes32);
         addNewAddressPointer(msg.sender);
-        users[msg.sender].name = name;
+        users[msg.sender].name = nameToBytes32;
       }
     }
+  }
+
+  //convert string to bytes32
+  function stringToBytes32(string memory name) public pure returns (bytes32) {
+    return bytes32(abi.encodePacked(name));
   }
   // Returns the default name provided by an user
 
@@ -91,13 +97,14 @@ contract Chat is Ownable {
   }
 
   //Adds the new user as your friend with an associated nickname
-  function addFriend(address friendAddress, bytes32 _nickname) external {
+  function addFriend(address friendAddress, string memory _nickname) external {
+    bytes32 nickname = stringToBytes32(_nickname);
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(friendAddress)) revert FriendAccountDoesNotExist(friendAddress);
     if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
     if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
     _friendsList.add(friendAddress);
-    users[msg.sender].friends.push(FriendStruct(friendAddress, _nickname));
+    users[msg.sender].friends.push(FriendStruct(friendAddress, nickname));
   }
 
   // Checks if two users are already friends or not
