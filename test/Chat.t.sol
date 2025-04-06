@@ -201,8 +201,8 @@ contract CounterTest is Test {
     assert(chatInstance.getMessagesByRoomId(roomId).length == 1);
   }
 
-  function test_ItGeneratesRegisteredGenericFriends() public {
-    chatInstance.generateGenericFriends();
+  function test_ItGeneratesRegisteredGenericFriends() public view {
+    //chatInstance.generateGenericFriends();
     assertEq(chatInstance.getPredefinedFriends().length, 10);
   }
 }

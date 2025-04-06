@@ -55,7 +55,9 @@ contract Chat is Ownable {
   EnumerableSet.AddressSet private _friendsList;
   //EnumerableSet.AddressSet private _messagesList;
 
-  constructor(address initialOwner) Ownable(initialOwner) { }
+  constructor(address initialOwner) Ownable(initialOwner) {
+    generateGenericFriends();
+  }
 
   error UserNameAlreadyExists(bytes32 name);
   error UserAccountAlreadyExists(address userAddress);
@@ -203,7 +205,7 @@ contract Chat is Ownable {
     return _roomsList.length();
   }
 
-  function generateGenericFriends() external {
+  function generateGenericFriends() private {
     string[10] memory names = [
       "Mo Salah",
       "Cristiano Ronaldo",
