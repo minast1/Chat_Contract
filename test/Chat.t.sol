@@ -60,37 +60,42 @@ contract CounterTest is Test {
 
   function test_AddFriend_ItRevertsIfUserAccountDoesNotExist() public {
     address testAddress1 = makeAddr("chatInstance");
-    address friendAddress = makeAddr("chatInstance2");
+
+    address[] memory friends = new address[](1);
     vm.startPrank(testAddress1);
 
     vm.expectRevert(abi.encodeWithSelector(Chat.UserAccountDoesNotExist.selector, testAddress1));
-    chatInstance.addFriend(friendAddress);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItRevertsIfFriendAccountDoesNotExist() public {
     address testAddress1 = makeAddr("chatInstance");
-    address friendAddress = makeAddr("chatInstance2");
+
+    address[] memory friends = new address[](1);
     vm.startPrank(testAddress1);
     chatInstance.createAccount("user1");
-    vm.expectRevert(abi.encodeWithSelector(Chat.FriendAccountDoesNotExist.selector, friendAddress));
-    chatInstance.addFriend(friendAddress);
+    vm.expectRevert(abi.encodeWithSelector(Chat.FriendAccountDoesNotExist.selector, friends[0]));
+    chatInstance.addFriend(friends);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItRevertsIfUserAndFriendAreTheSame() public {
     address testAddress1 = makeAddr("chatInstance");
+    address[] memory friends = new address[](1);
+    friends[0] = testAddress1;
     vm.startPrank(testAddress1);
     chatInstance.createAccount("user1");
     vm.expectRevert(abi.encodeWithSelector(Chat.CannotAddYourselfAsFriend.selector, testAddress1));
-    chatInstance.addFriend(testAddress1);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItRevertsIfUserAndFriendAreAlreadyFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-
+    address[] memory friends = new address[](1);
+    friends[0] = testAddress2;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -98,17 +103,18 @@ contract CounterTest is Test {
     chatInstance.createAccount("user2");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(testAddress2);
+    chatInstance.addFriend(friends);
 
     vm.expectRevert(abi.encodeWithSelector(Chat.UserIsAlreadyAFriend.selector, testAddress2));
-    chatInstance.addFriend(testAddress2);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItAddsAUserAsAFriend() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-
+    address[] memory friends = new address[](1);
+    friends[0] = testAddress2;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -116,32 +122,56 @@ contract CounterTest is Test {
     chatInstance.createAccount("user2");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(testAddress2);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
     assert(chatInstance.isFriend(testAddress2));
   }
 
-  function test_AddFriend_ItAddsFriendNickname() public {
+  function test_AddFriend_ItAddsMultipleFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-
+    address testAddress3 = makeAddr("chatInstance3");
+    address[] memory friends = new address[](2);
+    friends[0] = testAddress2;
+    friends[1] = testAddress3;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
     vm.prank(testAddress2);
     chatInstance.createAccount("user2");
 
-    vm.startPrank(testAddress1);
-    chatInstance.addFriend(testAddress2, "nickname");
-    assertEq(chatInstance.getUserFriends(testAddress1)[0]._nickname, "nickname");
+    vm.prank(testAddress3);
+    chatInstance.createAccount("user3");
 
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
+    assert(chatInstance.isFriend(testAddress2));
+    assert(chatInstance.isFriend(testAddress3));
   }
+
+  // function test_AddFriend_ItAddsFriendNickname() public {
+  //   address testAddress1 = makeAddr("chatInstance");
+  //   address testAddress2 = makeAddr("chatInstance2");
+
+  //   vm.prank(testAddress1);
+  //   chatInstance.createAccount("user1");
+
+  //   vm.prank(testAddress2);
+  //   chatInstance.createAccount("user2");
+
+  //   vm.startPrank(testAddress1);
+  //   chatInstance.addFriend(testAddress2, "nickname");
+  //   assertEq(chatInstance.getUserFriends(testAddress1)[0]._nickname, "nickname");
+
+  //   vm.stopPrank();
+  // }
 
   function test_GetUserFriends_ItReturnsListOfFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-
+    address[] memory friends = new address[](1);
+    friends[0] = testAddress2;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -149,7 +179,7 @@ contract CounterTest is Test {
     chatInstance.createAccount("user2");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(testAddress2);
+    chatInstance.addFriend(friends);
     vm.stopPrank();
     assert(chatInstance.getUserFriends(testAddress1).length == 1);
   }
@@ -166,13 +196,15 @@ contract CounterTest is Test {
   function test_startChat_ItCreatesANewChatRoom() public {
     address testAddress1 = makeAddr("chatInstance");
     address friendAddress = makeAddr("chatInstance2");
+    address[] memory friends = new address[](1);
+    friends[0] = friendAddress;
     bytes32 roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
     chatInstance.createAccount("user2");
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friendAddress);
+    chatInstance.addFriend(friends);
     roomId = chatInstance.startChat(friendAddress);
     vm.stopPrank();
     assertEq(chatInstance.getRoomsLength(), 1);
@@ -186,13 +218,15 @@ contract CounterTest is Test {
   function test_sendMessage_ItSendsAMessage() public {
     address testAddress1 = makeAddr("chatInstance");
     address friendAddress = makeAddr("chatInstance2");
+    address[] memory friends = new address[](1);
+    friends[0] = friendAddress;
     bytes32 roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
     chatInstance.createAccount("user2");
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friendAddress);
+    chatInstance.addFriend(friends);
     roomId = chatInstance.startChat(friendAddress);
     vm.stopPrank();
     vm.startPrank(testAddress1);
