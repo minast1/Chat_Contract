@@ -21,6 +21,11 @@ contract Chat is Ownable {
     uint256 _timestamp;
   }
 
+  struct GenericFriendStruct {
+    address _address;
+    string _nickname;
+  }
+
   struct UserStruct {
     bytes32 name;
     FriendStruct[] friends;
@@ -46,6 +51,7 @@ contract Chat is Ownable {
   mapping(bytes32 => MessageStruct[]) private messages;
   mapping(bytes32 => ChatRoomStruct) private chatRooms;
   EnumerableSet.Bytes32Set private _roomsList;
+  mapping(uint256 => GenericFriendStruct) private _predefinedfriends;
   EnumerableSet.AddressSet private _friendsList;
   //EnumerableSet.AddressSet private _messagesList;
 
@@ -195,5 +201,44 @@ contract Chat is Ownable {
 
   function getRoomsLength() public view returns (uint256) {
     return _roomsList.length();
+  }
+
+  function generateGenericFriends() external {
+    string[10] memory names = [
+      "Mo Salah",
+      "Cristiano Ronaldo",
+      "Sadio Mane",
+      "Lion Messi",
+      "Luis Garcia",
+      "Stephen Gerrard",
+      "Vinicius Junior",
+      "Dani Alves",
+      "Ronaldinho",
+      "Requelmi"
+    ];
+    //loop through friends array
+    for (uint256 i = 0; i < 10; i++) {
+      address genericAddress = address(bytes20(keccak256(abi.encodePacked(names[i]))));
+      string memory genericName = names[i];
+      //Register each friend to our app
+      addNewAddressPointer(genericAddress);
+      addNewNamePointer(stringToBytes32(genericName));
+      users[genericAddress].name = stringToBytes32(genericName);
+
+      _predefinedfriends[i] = GenericFriendStruct(genericAddress, genericName);
+    }
+  }
+
+  function getPredefinedFriends() public view returns (GenericFriendStruct[] memory) {
+    GenericFriendStruct[] memory fr = new GenericFriendStruct[](10);
+    for (uint256 i = 0; i < 10; i++) {
+      fr[i] = _predefinedfriends[i];
+    }
+
+    return fr;
+  }
+
+  function getUsersLength() public view returns (uint256) {
+    return _userAddressPointers.length();
   }
 }

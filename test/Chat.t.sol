@@ -200,4 +200,9 @@ contract CounterTest is Test {
     vm.stopPrank();
     assert(chatInstance.getMessagesByRoomId(roomId).length == 1);
   }
+
+  function test_ItGeneratesRegisteredGenericFriends() public {
+    chatInstance.generateGenericFriends();
+    assertEq(chatInstance.getPredefinedFriends().length, 10);
+  }
 }
