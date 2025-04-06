@@ -18,6 +18,7 @@ contract Chat is Ownable {
   struct FriendStruct {
     address _address;
     string _nickname;
+    uint256 _timestamp;
   }
 
   struct UserStruct {
@@ -107,7 +108,7 @@ contract Chat is Ownable {
     if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
     if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
     _friendsList.add(friendAddress);
-    users[msg.sender].friends.push(FriendStruct(friendAddress, string("")));
+    users[msg.sender].friends.push(FriendStruct(friendAddress, string(""), block.timestamp));
   }
 
   //Adds the new user as your friend with an associated nickname
@@ -117,7 +118,7 @@ contract Chat is Ownable {
     if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
     if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
     _friendsList.add(friendAddress);
-    users[msg.sender].friends.push(FriendStruct(friendAddress, _nickname));
+    users[msg.sender].friends.push(FriendStruct(friendAddress, _nickname, block.timestamp));
   }
 
   // Checks if two users are already friends or not
