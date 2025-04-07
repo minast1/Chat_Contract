@@ -150,23 +150,6 @@ contract CounterTest is Test {
     assert(chatInstance.isFriend(testAddress3));
   }
 
-  // function test_AddFriend_ItAddsFriendNickname() public {
-  //   address testAddress1 = makeAddr("chatInstance");
-  //   address testAddress2 = makeAddr("chatInstance2");
-
-  //   vm.prank(testAddress1);
-  //   chatInstance.createAccount("user1");
-
-  //   vm.prank(testAddress2);
-  //   chatInstance.createAccount("user2");
-
-  //   vm.startPrank(testAddress1);
-  //   chatInstance.addFriend(testAddress2, "nickname");
-  //   assertEq(chatInstance.getUserFriends(testAddress1)[0]._nickname, "nickname");
-
-  //   vm.stopPrank();
-  // }
-
   function test_GetUserFriends_ItReturnsListOfFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");

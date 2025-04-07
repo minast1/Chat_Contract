@@ -30,9 +30,6 @@ contract Chat is Ownable {
     bytes32 name;
     FriendStruct[] friends;
   }
-  // EnumerableSet.Bytes32Set rooms;
-  //MessageStruct[] messages;
-  //Pointers
 
   struct ChatRoomStruct {
     EnumerableSet.AddressSet users;
@@ -118,19 +115,10 @@ contract Chat is Ownable {
       if (msg.sender == _friendAddress[i]) revert CannotAddYourselfAsFriend(msg.sender);
       if (isFriend(_friendAddress[i])) revert UserIsAlreadyAFriend(_friendAddress[i]);
       _friendsList.add(_friendAddress[i]);
-      users[msg.sender].friends.push(FriendStruct(_friendAddress[i], string(""), block.timestamp));
+      string memory friendName = getUserName(_friendAddress[i]);
+      users[msg.sender].friends.push(FriendStruct(_friendAddress[i], friendName, block.timestamp));
     }
   }
-
-  //Adds the new user as your friend with an associated nickname
-  // function addFriend(address friendAddress, string memory _nickname) external {
-  //   if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
-  //   if (!existsAccount(friendAddress)) revert FriendAccountDoesNotExist(friendAddress);
-  //   if (msg.sender == friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
-  //   if (isFriend(friendAddress)) revert UserIsAlreadyAFriend(friendAddress);
-  //   _friendsList.add(friendAddress);
-  //   users[msg.sender].friends.push(FriendStruct(friendAddress, _nickname, block.timestamp));
-  // }
 
   // Checks if two users are already friends or not
   function isFriend(address friendAddress) public view returns (bool) {
