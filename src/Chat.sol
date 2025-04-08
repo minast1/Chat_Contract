@@ -134,7 +134,8 @@ contract Chat is Ownable {
   }
 
   // Sends a message in a chatRoom between users
-  function sendMessage(bytes32 roomId, string memory message) external {
+  function sendMessage(string memory _roomId, string memory message) external {
+    bytes32 roomId = stringToBytes32(_roomId);
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     // _messagesList.add(msg.sender);
@@ -144,24 +145,26 @@ contract Chat is Ownable {
   }
 
   //start a chat room between two users
-  function startChat(address chatee) external returns (bytes32) {
+  function startChat(address chatee) external returns (string memory) {
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
     bytes32 roomId = getRoomId(msg.sender, chatee);
     _roomsList.add(roomId);
     chatRooms[roomId].users.add(msg.sender);
     chatRooms[roomId].users.add(chatee);
-    return roomId;
+    return bytes32ToString(roomId);
   }
 
   //get the messages for a room by roomId
 
-  function getMessagesByRoomId(bytes32 roomId) public view returns (MessageStruct[] memory) {
+  function getMessagesByRoomId(string memory _roomId) public view returns (MessageStruct[] memory) {
+    bytes32 roomId = stringToBytes32(_roomId);
     if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     return chatRooms[roomId].messages;
   }
 
-  function getChatRoomUsers(bytes32 roomId) public view returns (address[] memory) {
+  function getChatRoomUsers(string memory _roomId) public view returns (address[] memory) {
+    bytes32 roomId = stringToBytes32(_roomId);
     if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     address[] memory members = chatRooms[roomId].users.values();
     return members;

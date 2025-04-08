@@ -181,7 +181,7 @@ contract CounterTest is Test {
     address friendAddress = makeAddr("chatInstance2");
     address[] memory friends = new address[](1);
     friends[0] = friendAddress;
-    bytes32 roomId;
+    string memory roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
@@ -203,7 +203,7 @@ contract CounterTest is Test {
     address friendAddress = makeAddr("chatInstance2");
     address[] memory friends = new address[](1);
     friends[0] = friendAddress;
-    bytes32 roomId;
+    string memory roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
