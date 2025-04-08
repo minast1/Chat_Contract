@@ -128,6 +128,8 @@ contract Chat is Ownable {
   // Returns a unique code for the channel created between the two users
   // Hash(key1,key2) where key1 is lexicographically smaller than key2
   function getRoomId(address user1, address user2) public pure returns (bytes32) {
+    //check if there is an already existing room between the two users
+
     if (user1 > user2) return keccak256(abi.encodePacked(user2, user1));
 
     return keccak256(abi.encodePacked(user1, user2));
@@ -149,9 +151,12 @@ contract Chat is Ownable {
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
     bytes32 roomId = getRoomId(msg.sender, chatee);
-    _roomsList.add(roomId);
-    chatRooms[roomId].users.add(msg.sender);
-    chatRooms[roomId].users.add(chatee);
+    if (!existsRoom(roomId)) {
+      _roomsList.add(roomId);
+      chatRooms[roomId].users.add(msg.sender);
+      chatRooms[roomId].users.add(chatee);
+    }
+
     return bytes32ToString(roomId);
   }
 

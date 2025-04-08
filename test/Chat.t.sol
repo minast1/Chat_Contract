@@ -222,4 +222,14 @@ contract CounterTest is Test {
     //chatInstance.generateGenericFriends();
     assertEq(chatInstance.getPredefinedFriends().length, 10);
   }
+
+  function test_ItGeneratesUniqueRoomIds() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+
+    bytes32 roomId1 = chatInstance.getRoomId(testAddress1, friendAddress);
+    //bytes32 roomId2 = chatInstance.getRoomId(testAddress1, friendAddress);
+    bytes32 roomId3 = chatInstance.getRoomId(friendAddress, testAddress1);
+    assert(roomId1 == roomId3);
+  }
 }
