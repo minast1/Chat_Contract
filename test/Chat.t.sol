@@ -3,8 +3,11 @@ pragma solidity ^0.8.13;
 
 import { Test, console } from "forge-std/Test.sol";
 import { Chat } from "../src/Chat.sol";
+import { Vm } from "forge-std/Vm.sol";
 
 contract CounterTest is Test {
+  event ChatStarted(string indexed _roomId);
+
   Chat public chatInstance;
 
   function setUp() public {
@@ -231,5 +234,30 @@ contract CounterTest is Test {
     //bytes32 roomId2 = chatInstance.getRoomId(testAddress1, friendAddress);
     bytes32 roomId3 = chatInstance.getRoomId(friendAddress, testAddress1);
     assert(roomId1 == roomId3);
+  }
+
+  function test_ItEmmitsOnChatStarted() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+    address[] memory friends = new address[](1);
+    friends[0] = friendAddress;
+    vm.prank(testAddress1);
+    chatInstance.createAccount("user1");
+    vm.prank(friendAddress);
+    chatInstance.createAccount("user2");
+    //begin recording logs
+    vm.recordLogs();
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(friends);
+    string memory roomId = chatInstance.startChat(friendAddress);
+    //emit ChatStarted(roomId);
+    //_castLogPayloadViewToPureemit ChatStarted(roomId);
+    vm.stopPrank();
+
+    Vm.Log[] memory logs = vm.getRecordedLogs();
+
+    assertEq(logs.length, 1);
+    assertEq(logs[0].topics[0], keccak256("ChatStarted(string)"));
+    assertEq(logs[0].topics[1], bytes32(keccak256(abi.encodePacked(roomId))));
   }
 }

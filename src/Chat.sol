@@ -43,6 +43,9 @@ contract Chat is Ownable {
     uint256 timestamp;
   }
 
+  //events
+  event ChatStarted(string indexed _roomId);
+
   mapping(address => UserStruct) private users;
   //mapping(address => UserStruct) private friends;
   mapping(bytes32 => MessageStruct[]) private messages;
@@ -82,7 +85,7 @@ contract Chat is Ownable {
   }
 
   //convert string to bytes32
-  function stringToBytes32(string memory name) private pure returns (bytes32) {
+  function stringToBytes32(string memory name) public pure returns (bytes32) {
     return bytes32(abi.encodePacked(name));
   }
 
@@ -157,6 +160,7 @@ contract Chat is Ownable {
       chatRooms[roomId].users.add(chatee);
     }
 
+    emit ChatStarted(bytes32ToString(roomId));
     return bytes32ToString(roomId);
   }
 
