@@ -13,8 +13,6 @@ contract Chat is Ownable {
 
   EnumerableSet.Bytes32Set private _userNamePointers;
 
-  // using EnumerableSet for EnumerableSet.UintSet;
-
   struct FriendStruct {
     address _address;
     string _nickname;
@@ -31,11 +29,6 @@ contract Chat is Ownable {
     bytes32 name;
     FriendStruct[] friends;
   }
-
-  // struct ChatRoomStruct {
-  //   EnumerableSet.AddressSet users;
-  //   MessageStruct[] messages;
-  // }
 
   struct MessageStruct {
     string message;
@@ -56,9 +49,7 @@ contract Chat is Ownable {
   EnumerableSet.AddressSet private _friendsList;
   //EnumerableSet.AddressSet private _messagesList;
 
-  constructor(address initialOwner) Ownable(initialOwner) {
-    generateGenericFriends();
-  }
+  constructor(address initialOwner) Ownable(initialOwner) { }
 
   error UserNameAlreadyExists(bytes32 name);
   error UserAccountAlreadyExists(address userAddress);
@@ -103,33 +94,36 @@ contract Chat is Ownable {
     return string(bytesArray);
   }
 
-  /*
-  Returns the default name provided by an user
-  This function should not exist but used for getting the names of the predefined friends.
-  Ideally the add friend modal should accept the the preferred name or nickname of the friend 
-  and the address of the friend
-  */
   function getUserName(address userAddress) public view returns (string memory) {
     if (!existsAccount(userAddress)) revert UserAccountDoesNotExist(userAddress);
     bytes32 decodedName = users[userAddress].name;
     return bytes32ToString(decodedName);
   }
 
-  // Adds new user as your friend
-  function addFriend(address[] memory _friendAddress) external {
-    //add each friend to the list
-    for (uint256 i = 0; i < _friendAddress.length; i++) {
-      if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
-      if (!existsAccount(_friendAddress[i])) revert FriendAccountDoesNotExist(_friendAddress[i]);
-      if (msg.sender == _friendAddress[i]) revert CannotAddYourselfAsFriend(msg.sender);
-      if (isFriend(_friendAddress[i])) revert UserIsAlreadyAFriend(_friendAddress[i]);
-      _friendsList.add(_friendAddress[i]);
-      string memory friendName = getUserName(_friendAddress[i]);
-      bytes32 roomId = getRoomId(msg.sender, _friendAddress[i]);
-      users[msg.sender].friends.push(
-        FriendStruct(_friendAddress[i], friendName, block.timestamp, roomId)
-      );
-    }
+  // Adds new user as your friend without nickname option
+  function addFriend(address _friendAddress) external {
+    if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
+    if (!existsAccount(_friendAddress)) revert FriendAccountDoesNotExist(_friendAddress);
+    if (msg.sender == _friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
+    if (isFriend(_friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
+    _friendsList.add(_friendAddress);
+    string memory friendName = getUserName(_friendAddress);
+    bytes32 roomId = getRoomId(msg.sender, _friendAddress);
+    users[msg.sender].friends.push(
+      FriendStruct(_friendAddress, friendName, block.timestamp, roomId)
+    );
+  }
+
+  // Adds new user as your friend with nickname option
+  function addFriend(address _friendAddress, string memory _nickname) external {
+    if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
+    if (!existsAccount(_friendAddress)) revert FriendAccountDoesNotExist(_friendAddress);
+    if (msg.sender == _friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
+    if (isFriend(_friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
+    _friendsList.add(_friendAddress);
+
+    bytes32 roomId = getRoomId(msg.sender, _friendAddress);
+    users[msg.sender].friends.push(FriendStruct(_friendAddress, _nickname, block.timestamp, roomId));
   }
 
   // Checks if two users are already friends or not
@@ -155,26 +149,7 @@ contract Chat is Ownable {
     // _messagesList.add(msg.sender);
     MessageStruct[] storage messages = chat_messages[_roomId];
     messages.push(MessageStruct(message, _roomId, msg.sender, block.timestamp));
-    //chatRooms[roomId].messages.push(MessageStruct(message, roomId, msg.sender, block.timestamp));
-    //messages[msg.sender] = MessageStruct(message, roomId, msg.sender, block.timestamp);
   }
-
-  //start a chat room between two users
-  // function startChat(address chatee) external returns (string memory) {
-  //   if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
-  //   if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
-  //   bytes32 roomId = getRoomId(msg.sender, chatee);
-  //   if (!existsRoom(roomId)) {
-  //     _roomsList.add(roomId);
-  //     chatRooms[roomId].users.add(msg.sender);
-  //     chatRooms[roomId].users.add(chatee);
-  //   }
-
-  //   emit ChatStarted(bytes32ToString(roomId));
-  //   return bytes32ToString(roomId);
-  // }
-
-  //get the messages for a room by roomId
 
   function getMessagesByRoomId(bytes32 _roomId) public view returns (MessageStruct[] memory) {
     // bytes32 roomId = stringToBytes32(_roomId);
@@ -182,13 +157,6 @@ contract Chat is Ownable {
     return chat_messages[_roomId];
     //return chatRooms[roomId].messages;
   }
-
-  // function getChatRoomUsers(string memory _roomId) public view returns (address[] memory) {
-  //   bytes32 roomId = stringToBytes32(_roomId);
-  //   if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
-  //   address[] memory members = chatRooms[roomId].users.values();
-  //   return members;
-  // }
 
   function existsUserName(bytes32 key) public view returns (bool) {
     return _userNamePointers.contains(key);
@@ -217,41 +185,6 @@ contract Chat is Ownable {
 
   function getRoomsLength() public view returns (uint256) {
     return _roomsList.length();
-  }
-
-  function generateGenericFriends() private {
-    string[10] memory names = [
-      "Mo Salah",
-      "Cristiano Ronaldo",
-      "Sadio Mane",
-      "Lion Messi",
-      "Luis Garcia",
-      "Stephen Gerrard",
-      "Vinicius Junior",
-      "Dani Alves",
-      "Ronaldinho",
-      "Requelmi"
-    ];
-    //loop through friends array
-    for (uint256 i = 0; i < 10; i++) {
-      address genericAddress = address(bytes20(keccak256(abi.encodePacked(names[i]))));
-      string memory genericName = names[i];
-      //Register each friend to our app
-      addNewAddressPointer(genericAddress);
-      addNewNamePointer(stringToBytes32(genericName));
-      users[genericAddress].name = stringToBytes32(genericName);
-
-      _predefinedfriends[i] = GenericFriendStruct(genericAddress, genericName);
-    }
-  }
-
-  function getPredefinedFriends() public view returns (GenericFriendStruct[] memory) {
-    GenericFriendStruct[] memory fr = new GenericFriendStruct[](10);
-    for (uint256 i = 0; i < 10; i++) {
-      fr[i] = _predefinedfriends[i];
-    }
-
-    return fr;
   }
 
   function getUsersLength() public view returns (uint256) {

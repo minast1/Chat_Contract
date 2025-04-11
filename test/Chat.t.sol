@@ -5,7 +5,7 @@ import { Test, console } from "forge-std/Test.sol";
 import { Chat } from "../src/Chat.sol";
 import { Vm } from "forge-std/Vm.sol";
 
-contract CounterTest is Test {
+contract ChatTest is Test {
   event ChatStarted(string indexed _roomId);
 
   Chat public chatInstance;
@@ -63,42 +63,29 @@ contract CounterTest is Test {
 
   function test_AddFriend_ItRevertsIfUserAccountDoesNotExist() public {
     address testAddress1 = makeAddr("chatInstance");
+    address testAddress2 = makeAddr("chatInstance2");
 
-    address[] memory friends = new address[](1);
     vm.startPrank(testAddress1);
 
     vm.expectRevert(abi.encodeWithSelector(Chat.UserAccountDoesNotExist.selector, testAddress1));
-    chatInstance.addFriend(friends);
-    vm.stopPrank();
-  }
-
-  function test_AddFriend_ItRevertsIfFriendAccountDoesNotExist() public {
-    address testAddress1 = makeAddr("chatInstance");
-
-    address[] memory friends = new address[](1);
-    vm.startPrank(testAddress1);
-    chatInstance.createAccount("user1");
-    vm.expectRevert(abi.encodeWithSelector(Chat.FriendAccountDoesNotExist.selector, friends[0]));
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress2);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItRevertsIfUserAndFriendAreTheSame() public {
     address testAddress1 = makeAddr("chatInstance");
-    address[] memory friends = new address[](1);
-    friends[0] = testAddress1;
+
     vm.startPrank(testAddress1);
     chatInstance.createAccount("user1");
     vm.expectRevert(abi.encodeWithSelector(Chat.CannotAddYourselfAsFriend.selector, testAddress1));
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress1);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItRevertsIfUserAndFriendAreAlreadyFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = testAddress2;
+
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -106,18 +93,17 @@ contract CounterTest is Test {
     chatInstance.createAccount("user2");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress2);
 
     vm.expectRevert(abi.encodeWithSelector(Chat.UserIsAlreadyAFriend.selector, testAddress2));
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress2);
     vm.stopPrank();
   }
 
   function test_AddFriend_ItAddsAUserAsAFriend() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = testAddress2;
+
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -125,18 +111,33 @@ contract CounterTest is Test {
     chatInstance.createAccount("user2");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress2);
     vm.stopPrank();
     assert(chatInstance.isFriend(testAddress2));
   }
 
-  function test_AddFriend_ItAddsMultipleFriends() public {
+  function test_AddFriend_ItAddsFriendWithNickname() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address testAddress2 = makeAddr("chatInstance2");
+
+    vm.prank(testAddress1);
+    chatInstance.createAccount("user1");
+
+    vm.prank(testAddress2);
+    chatInstance.createAccount("user2");
+
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(testAddress2, "user2");
+    Chat.FriendStruct[] memory friends = chatInstance.getUserFriends(testAddress1);
+    vm.stopPrank();
+    assertEq(friends[0]._nickname, "user2");
+  }
+
+  function test_GetUserFriends_ItReturnsListOfFriends() public {
     address testAddress1 = makeAddr("chatInstance");
     address testAddress2 = makeAddr("chatInstance2");
     address testAddress3 = makeAddr("chatInstance3");
-    address[] memory friends = new address[](2);
-    friends[0] = testAddress2;
-    friends[1] = testAddress3;
+
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
 
@@ -147,41 +148,23 @@ contract CounterTest is Test {
     chatInstance.createAccount("user3");
 
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(testAddress2);
+    chatInstance.addFriend(testAddress3);
     vm.stopPrank();
-    assert(chatInstance.isFriend(testAddress2));
-    assert(chatInstance.isFriend(testAddress3));
-  }
-
-  function test_GetUserFriends_ItReturnsListOfFriends() public {
-    address testAddress1 = makeAddr("chatInstance");
-    address testAddress2 = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = testAddress2;
-    vm.prank(testAddress1);
-    chatInstance.createAccount("user1");
-
-    vm.prank(testAddress2);
-    chatInstance.createAccount("user2");
-
-    vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
-    vm.stopPrank();
-    assert(chatInstance.getUserFriends(testAddress1).length == 1);
+    assert(chatInstance.getUserFriends(testAddress1).length == 2);
   }
 
   function test_sendMessage_ItSendsAMessage() public {
     address testAddress1 = makeAddr("chatInstance");
     address friendAddress = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = friendAddress;
+
     //string memory roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
     chatInstance.createAccount("user2");
     vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
+    chatInstance.addFriend(friendAddress);
     Chat.FriendStruct[] memory myfriends = chatInstance.getUserFriends(testAddress1);
     // roomId = chatInstance.startChat(friendAddress);
     vm.stopPrank();
@@ -189,11 +172,6 @@ contract CounterTest is Test {
     chatInstance.sendMessage(myfriends[0]._roomId, "message");
     vm.stopPrank();
     assert(chatInstance.getMessagesByRoomId(myfriends[0]._roomId).length == 1);
-  }
-
-  function test_ItGeneratesRegisteredGenericFriends() public view {
-    //chatInstance.generateGenericFriends();
-    assertEq(chatInstance.getPredefinedFriends().length, 10);
   }
 
   function test_ItGeneratesUniqueRoomIds() public {
