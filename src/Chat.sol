@@ -19,6 +19,7 @@ contract Chat is Ownable {
     address _address;
     string _nickname;
     uint256 _timestamp;
+    bytes32 _roomId;
   }
 
   struct GenericFriendStruct {
@@ -31,10 +32,10 @@ contract Chat is Ownable {
     FriendStruct[] friends;
   }
 
-  struct ChatRoomStruct {
-    EnumerableSet.AddressSet users;
-    MessageStruct[] messages;
-  }
+  // struct ChatRoomStruct {
+  //   EnumerableSet.AddressSet users;
+  //   MessageStruct[] messages;
+  // }
 
   struct MessageStruct {
     string message;
@@ -48,8 +49,8 @@ contract Chat is Ownable {
 
   mapping(address => UserStruct) private users;
   //mapping(address => UserStruct) private friends;
-  mapping(bytes32 => MessageStruct[]) private messages;
-  mapping(bytes32 => ChatRoomStruct) private chatRooms;
+  mapping(bytes32 => MessageStruct[]) private chat_messages;
+  // mapping(bytes32 => ) private chatRooms;
   EnumerableSet.Bytes32Set private _roomsList;
   mapping(uint256 => GenericFriendStruct) private _predefinedfriends;
   EnumerableSet.AddressSet private _friendsList;
@@ -101,8 +102,13 @@ contract Chat is Ownable {
     }
     return string(bytesArray);
   }
-  // Returns the default name provided by an user
 
+  /*
+  Returns the default name provided by an user
+  This function should not exist but used for getting the names of the predefined friends.
+  Ideally the add friend modal should accept the the preferred name or nickname of the friend 
+  and the address of the friend
+  */
   function getUserName(address userAddress) public view returns (string memory) {
     if (!existsAccount(userAddress)) revert UserAccountDoesNotExist(userAddress);
     bytes32 decodedName = users[userAddress].name;
@@ -119,7 +125,10 @@ contract Chat is Ownable {
       if (isFriend(_friendAddress[i])) revert UserIsAlreadyAFriend(_friendAddress[i]);
       _friendsList.add(_friendAddress[i]);
       string memory friendName = getUserName(_friendAddress[i]);
-      users[msg.sender].friends.push(FriendStruct(_friendAddress[i], friendName, block.timestamp));
+      bytes32 roomId = getRoomId(msg.sender, _friendAddress[i]);
+      users[msg.sender].friends.push(
+        FriendStruct(_friendAddress[i], friendName, block.timestamp, roomId)
+      );
     }
   }
 
@@ -139,45 +148,47 @@ contract Chat is Ownable {
   }
 
   // Sends a message in a chatRoom between users
-  function sendMessage(string memory _roomId, string memory message) external {
-    bytes32 roomId = stringToBytes32(_roomId);
+  function sendMessage(bytes32 _roomId, string memory message) external {
+    //bytes32 roomId = stringToBytes32(_roomId);
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
-    if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
+    // if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     // _messagesList.add(msg.sender);
-
-    chatRooms[roomId].messages.push(MessageStruct(message, roomId, msg.sender, block.timestamp));
+    MessageStruct[] storage messages = chat_messages[_roomId];
+    messages.push(MessageStruct(message, _roomId, msg.sender, block.timestamp));
+    //chatRooms[roomId].messages.push(MessageStruct(message, roomId, msg.sender, block.timestamp));
     //messages[msg.sender] = MessageStruct(message, roomId, msg.sender, block.timestamp);
   }
 
   //start a chat room between two users
-  function startChat(address chatee) external returns (string memory) {
-    if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
-    if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
-    bytes32 roomId = getRoomId(msg.sender, chatee);
-    if (!existsRoom(roomId)) {
-      _roomsList.add(roomId);
-      chatRooms[roomId].users.add(msg.sender);
-      chatRooms[roomId].users.add(chatee);
-    }
+  // function startChat(address chatee) external returns (string memory) {
+  //   if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
+  //   if (!existsAccount(chatee)) revert UserAccountDoesNotExist(chatee);
+  //   bytes32 roomId = getRoomId(msg.sender, chatee);
+  //   if (!existsRoom(roomId)) {
+  //     _roomsList.add(roomId);
+  //     chatRooms[roomId].users.add(msg.sender);
+  //     chatRooms[roomId].users.add(chatee);
+  //   }
 
-    emit ChatStarted(bytes32ToString(roomId));
-    return bytes32ToString(roomId);
-  }
+  //   emit ChatStarted(bytes32ToString(roomId));
+  //   return bytes32ToString(roomId);
+  // }
 
   //get the messages for a room by roomId
 
-  function getMessagesByRoomId(string memory _roomId) public view returns (MessageStruct[] memory) {
-    bytes32 roomId = stringToBytes32(_roomId);
-    if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
-    return chatRooms[roomId].messages;
+  function getMessagesByRoomId(bytes32 _roomId) public view returns (MessageStruct[] memory) {
+    // bytes32 roomId = stringToBytes32(_roomId);
+    //if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
+    return chat_messages[_roomId];
+    //return chatRooms[roomId].messages;
   }
 
-  function getChatRoomUsers(string memory _roomId) public view returns (address[] memory) {
-    bytes32 roomId = stringToBytes32(_roomId);
-    if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
-    address[] memory members = chatRooms[roomId].users.values();
-    return members;
-  }
+  // function getChatRoomUsers(string memory _roomId) public view returns (address[] memory) {
+  //   bytes32 roomId = stringToBytes32(_roomId);
+  //   if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
+  //   address[] memory members = chatRooms[roomId].users.values();
+  //   return members;
+  // }
 
   function existsUserName(bytes32 key) public view returns (bool) {
     return _userNamePointers.contains(key);
@@ -187,9 +198,9 @@ contract Chat is Ownable {
     return _userAddressPointers.contains(key);
   }
 
-  function existsRoom(bytes32 key) public view returns (bool) {
-    return _roomsList.contains(key);
-  }
+  // function existsRoom(bytes32 key) public view returns (bool) {
+  //   return _roomsList.contains(key);
+  // }
 
   function addNewNamePointer(bytes32 key) private {
     _userNamePointers.add(key);

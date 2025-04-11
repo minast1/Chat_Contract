@@ -170,55 +170,25 @@ contract CounterTest is Test {
     assert(chatInstance.getUserFriends(testAddress1).length == 1);
   }
 
-  function test_startChat_ItRevertsIfUserAccountDoesNotExist() public {
-    address testAddress1 = makeAddr("chatInstance");
-    address friendAddress = makeAddr("chatInstance2");
-    vm.startPrank(testAddress1);
-    vm.expectRevert(abi.encodeWithSelector(Chat.UserAccountDoesNotExist.selector, testAddress1));
-    chatInstance.startChat(friendAddress);
-    vm.stopPrank();
-  }
-
-  function test_startChat_ItCreatesANewChatRoom() public {
-    address testAddress1 = makeAddr("chatInstance");
-    address friendAddress = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = friendAddress;
-    string memory roomId;
-    vm.prank(testAddress1);
-    chatInstance.createAccount("user1");
-    vm.prank(friendAddress);
-    chatInstance.createAccount("user2");
-    vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
-    roomId = chatInstance.startChat(friendAddress);
-    vm.stopPrank();
-    assertEq(chatInstance.getRoomsLength(), 1);
-    address[] memory members = chatInstance.getChatRoomUsers(roomId);
-    assertEq(members.length, 2);
-    assertEq(members[0], testAddress1);
-    assertEq(members[1], friendAddress);
-    assert(chatInstance.getMessagesByRoomId(roomId).length == 0);
-  }
-
   function test_sendMessage_ItSendsAMessage() public {
     address testAddress1 = makeAddr("chatInstance");
     address friendAddress = makeAddr("chatInstance2");
     address[] memory friends = new address[](1);
     friends[0] = friendAddress;
-    string memory roomId;
+    //string memory roomId;
     vm.prank(testAddress1);
     chatInstance.createAccount("user1");
     vm.prank(friendAddress);
     chatInstance.createAccount("user2");
     vm.startPrank(testAddress1);
     chatInstance.addFriend(friends);
-    roomId = chatInstance.startChat(friendAddress);
+    Chat.FriendStruct[] memory myfriends = chatInstance.getUserFriends(testAddress1);
+    // roomId = chatInstance.startChat(friendAddress);
     vm.stopPrank();
     vm.startPrank(testAddress1);
-    chatInstance.sendMessage(roomId, "message");
+    chatInstance.sendMessage(myfriends[0]._roomId, "message");
     vm.stopPrank();
-    assert(chatInstance.getMessagesByRoomId(roomId).length == 1);
+    assert(chatInstance.getMessagesByRoomId(myfriends[0]._roomId).length == 1);
   }
 
   function test_ItGeneratesRegisteredGenericFriends() public view {
@@ -234,30 +204,5 @@ contract CounterTest is Test {
     //bytes32 roomId2 = chatInstance.getRoomId(testAddress1, friendAddress);
     bytes32 roomId3 = chatInstance.getRoomId(friendAddress, testAddress1);
     assert(roomId1 == roomId3);
-  }
-
-  function test_ItEmmitsOnChatStarted() public {
-    address testAddress1 = makeAddr("chatInstance");
-    address friendAddress = makeAddr("chatInstance2");
-    address[] memory friends = new address[](1);
-    friends[0] = friendAddress;
-    vm.prank(testAddress1);
-    chatInstance.createAccount("user1");
-    vm.prank(friendAddress);
-    chatInstance.createAccount("user2");
-    //begin recording logs
-    vm.recordLogs();
-    vm.startPrank(testAddress1);
-    chatInstance.addFriend(friends);
-    string memory roomId = chatInstance.startChat(friendAddress);
-    //emit ChatStarted(roomId);
-    //_castLogPayloadViewToPureemit ChatStarted(roomId);
-    vm.stopPrank();
-
-    Vm.Log[] memory logs = vm.getRecordedLogs();
-
-    assertEq(logs.length, 1);
-    assertEq(logs[0].topics[0], keccak256("ChatStarted(string)"));
-    assertEq(logs[0].topics[1], bytes32(keccak256(abi.encodePacked(roomId))));
   }
 }
