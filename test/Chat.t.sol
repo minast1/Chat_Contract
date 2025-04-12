@@ -113,7 +113,7 @@ contract ChatTest is Test {
     vm.startPrank(testAddress1);
     chatInstance.addFriend(testAddress2);
     vm.stopPrank();
-    assert(chatInstance.isFriend(testAddress2));
+    assert(chatInstance.isFriend(testAddress1, testAddress2));
   }
 
   function test_AddFriend_ItAddsFriendWithNickname() public {

@@ -35,6 +35,7 @@ contract Chat is Ownable {
     bytes32 roomId;
     address sender;
     uint256 timestamp;
+    string nickname;
   }
 
   //events
@@ -46,7 +47,8 @@ contract Chat is Ownable {
   // mapping(bytes32 => ) private chatRooms;
   EnumerableSet.Bytes32Set private _roomsList;
   mapping(uint256 => GenericFriendStruct) private _predefinedfriends;
-  EnumerableSet.AddressSet private _friendsList;
+  mapping(address => EnumerableSet.AddressSet) private _userFriends;
+  // EnumerableSet.AddressSet private _friendsList;
   //EnumerableSet.AddressSet private _messagesList;
 
   constructor(address initialOwner) Ownable(initialOwner) { }
@@ -105,8 +107,8 @@ contract Chat is Ownable {
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(_friendAddress)) revert FriendAccountDoesNotExist(_friendAddress);
     if (msg.sender == _friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
-    if (isFriend(_friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
-    _friendsList.add(_friendAddress);
+    if (isFriend(msg.sender, _friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
+    _userFriends[msg.sender].add(_friendAddress);
     string memory friendName = getUserName(_friendAddress);
     bytes32 roomId = getRoomId(msg.sender, _friendAddress);
     users[msg.sender].friends.push(
@@ -119,16 +121,16 @@ contract Chat is Ownable {
     if (!existsAccount(msg.sender)) revert UserAccountDoesNotExist(msg.sender);
     if (!existsAccount(_friendAddress)) revert FriendAccountDoesNotExist(_friendAddress);
     if (msg.sender == _friendAddress) revert CannotAddYourselfAsFriend(msg.sender);
-    if (isFriend(_friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
-    _friendsList.add(_friendAddress);
+    if (isFriend(msg.sender, _friendAddress)) revert UserIsAlreadyAFriend(_friendAddress);
+    _userFriends[msg.sender].add(_friendAddress);
 
     bytes32 roomId = getRoomId(msg.sender, _friendAddress);
     users[msg.sender].friends.push(FriendStruct(_friendAddress, _nickname, block.timestamp, roomId));
   }
 
   // Checks if two users are already friends or not
-  function isFriend(address friendAddress) public view returns (bool) {
-    return _friendsList.contains(friendAddress);
+  function isFriend(address owner, address friendAddress) public view returns (bool) {
+    return _userFriends[owner].contains(friendAddress);
   }
 
   // Returns a unique code for the channel created between the two users
@@ -148,7 +150,8 @@ contract Chat is Ownable {
     // if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
     // _messagesList.add(msg.sender);
     MessageStruct[] storage messages = chat_messages[_roomId];
-    messages.push(MessageStruct(message, _roomId, msg.sender, block.timestamp));
+    string memory _nickname = getUserName(msg.sender);
+    messages.push(MessageStruct(message, _roomId, msg.sender, block.timestamp, _nickname));
   }
 
   function getMessagesByRoomId(bytes32 _roomId) public view returns (MessageStruct[] memory) {
