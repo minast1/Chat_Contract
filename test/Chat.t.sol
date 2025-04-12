@@ -171,4 +171,25 @@ contract ChatTest is Test {
     bytes32 roomId3 = chatInstance.getRoomId(friendAddress, testAddress1);
     assert(roomId1 == roomId3);
   }
+
+  function test_ItClearsAllMessagesForARoom() public {
+    address testAddress1 = makeAddr("chatInstance");
+    address friendAddress = makeAddr("chatInstance2");
+    vm.prank(testAddress1);
+    chatInstance.createAccount("user1");
+    vm.prank(friendAddress);
+    chatInstance.createAccount("user2");
+    vm.startPrank(testAddress1);
+    chatInstance.addFriend(friendAddress);
+    Chat.FriendStruct[] memory myfriends = chatInstance.getUserFriends(testAddress1);
+    vm.stopPrank();
+    vm.startPrank(testAddress1);
+    chatInstance.sendMessage(myfriends[0]._roomId, "message");
+    vm.stopPrank();
+    assert(chatInstance.getMessagesByRoomId(myfriends[0]._roomId).length == 1);
+    vm.startPrank(testAddress1);
+    chatInstance.clearChatMessages(myfriends[0]._roomId);
+    vm.stopPrank();
+    assert(chatInstance.getMessagesByRoomId(myfriends[0]._roomId).length == 0);
+  }
 }

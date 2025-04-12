@@ -146,6 +146,11 @@ contract Chat is Ownable {
     return s_chat_messages[_roomId];
   }
 
+  function clearChatMessages(bytes32 _roomId) public {
+    //if (!existsRoom(roomId)) revert ChatRoomDoesNotExist(roomId);
+    delete s_chat_messages[_roomId];
+  }
+
   function existsUserName(bytes32 key) public view returns (bool) {
     return s_userNamePointers.contains(key);
   }
@@ -161,14 +166,6 @@ contract Chat is Ownable {
   function getUserFriends(address userAddress) public view returns (FriendStruct[] memory) {
     if (!existsAccount(userAddress)) revert UserAccountDoesNotExist(userAddress);
     return s_users[userAddress].friends;
-  }
-
-  function getRoomsLength() public view returns (uint256) {
-    return s_roomsList.length();
-  }
-
-  function getUsersLength() public view returns (uint256) {
-    return s_userAddressPointers.length();
   }
 
   function addNewAddressPointer(address key) private {
