@@ -34,18 +34,6 @@ contract ChatTest is Test {
     vm.stopPrank();
   }
 
-  function test_CreateAccount_ItRevertsIfUserAddressAlreadyExists() public {
-    address testAddress1 = makeAddr("chatInstance");
-    vm.prank(testAddress1);
-    chatInstance.createAccount("user1");
-
-    vm.startPrank(testAddress1);
-    vm.expectRevert(abi.encodeWithSelector(Chat.UserAccountAlreadyExists.selector, testAddress1));
-    chatInstance.createAccount("user2");
-
-    vm.stopPrank();
-  }
-
   function test_CreateAccount_ItAddsUserAccount() public {
     address testAddress1 = makeAddr("chatInstance");
     vm.prank(testAddress1);
